@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# inve
+#
+# usage: inve
+#
+# Attempts to find the root of a virtual environment by walking the directory
+# tree from "$PWD" to "/".  Then, it activates a subshell using the $SHELL
+# environment variable.
+#
+# A side effect of invoking a subshell is that subshells go out of their way to
+# set PS1.  You could add something like this to your .bashrc to append virtual
+# environment context to your PS1:
+#
+# function ps1_context {
+# 	# For any of these bits of context that exist, display them and append
+# 	# a space.
+#   # https://gist.github.com/datagrok/2199506#dont-mess-with-my-prompt
+# 	virtualenv=`basename "$VIRTUAL_ENV"`
+# 	for v in "$debian_chroot" "$virtualenv" "$PS1_CONTEXT"; do
+# 		echo -n "${v:+$v }"
+# 	done
+# }
+# export PS1="$(ps1_context)"'\u@\h:\w\$ '
+#
+# Basedon https://gist.github.com/datagrok/2199506
+
+# Sanity check for SHELL variable
+if [ -z "${SHELL}" ]; then
+  echo "Error: \$SHELL variable not set."
+  exit 1
+fi
+
+# Search for virtual environments in directories with these names
+VIRTUAL_ENV_BASENAMES="
+  .
+  env env2 env3 .env
+  .env .env2 .env3
+  venv venv2 venv3
+  .venv .venv2 .venv3
+"
+
+# Save PWD
+INVE_OLDPWD="`pwd`"
+
+# First, locate the root of a virtual environment
+# Based on https://gist.github.com/datagrok/2199506#a-system-level-inve
+while [ "${PWD}" != "/" ]; do
+  # Try all the possible virtual env directory names
+  for VIRTUAL_ENV_BASENAME in ${VIRTUAL_ENV_BASENAMES}; do
+	  # Stop here if this the root of a virtualenv
+    ACTIVATE="${PWD}/${VIRTUAL_ENV_BASENAME}/bin/activate"
+	  if [ -e "${ACTIVATE}" ]; then
+		  break 2  # break out of nested loop
+	  fi
+  done
+	cd ..
+done
+if [ "$PWD" = "/" ]; then
+	echo "Could not activate: no virtual environment found." >&2
+	exit 1
+fi
+
+# Restore PWD
+cd "${INVE_OLDPWD}"
+
+# Activate virtual environment using the Bash activatation script, then start
+# the subshell of the user's choice.  The subshell will inherit the environment
+# variables previously exported by bash.
+echo "${ACTIVATE}"
+source "${ACTIVATE}"
+exec "${@:-$SHELL}"

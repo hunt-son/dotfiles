@@ -6,19 +6,24 @@
 
 # Don't backup these files
 set -o noglob # bug fix: globbing fucks up the *'s in EXCLUDE
-EXCLUDE+=' --exclude *.vmem'
-EXCLUDE+=' --exclude *.vmdk'
-EXCLUDE+=' --exclude *.iso'
-EXCLUDE+=' --exclude .mozilla/firefox/*/Cache/*'
 EXCLUDE+=' --exclude .Trash/***'
-EXCLUDE+=' --exclude awdeorio/Library/Caches/Google/Chrome/Default/Cache/***'
 EXCLUDE+=' --exclude .dropbox/***'
-EXCLUDE+=' --exclude *.vdi'
+EXCLUDE+=' --exclude .vagrant.d/***'
 EXCLUDE+=' --exclude nobackup/***'
+
+# Python Virtual environments
+EXCLUDE+=' --exclude .venv/***'
+EXCLUDE+=' --exclude venv/***'
+EXCLUDE+=' --exclude env/***'
+
+# Virtual machines
+EXCLUDE+=' --exclude *.vmdk'
+EXCLUDE+=' --exclude *.vdi'
+
+# Optional
 EXCLUDE+=' --exclude Library/***'
-EXCLUDE+=' --exclude Applications/***'
-# EXCLUDE+=' --exclude GoogleDrive/***'
-# EXCLUDE+=' --exclude Dropbox/***'
+EXCLUDE+=' --exclude GoogleDrive/***'
+EXCLUDE+=' --exclude Dropbox/***'
 
 # Sanity check that this is my laptop
 if [ `hostname` != "manzana.local" ]; then
@@ -27,8 +32,8 @@ if [ `hostname` != "manzana.local" ]; then
 fi
 
 # Check if another backup process is running
-if pgrep `basename $0` | grep -vq $$; then
-  echo "Error: another `basename $0` process is running"
+if ps -axc | awk '{print $NF}' | grep -q '^backup$'; then
+  echo "Error: another backup process is running"
   exit 1
 fi
 

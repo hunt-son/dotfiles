@@ -1,12 +1,8 @@
 #!/bin/bash
-
-###############################################################################
 #
-#  ~/.bashrc
+#  .bashrc
 #
-#  Drew's Sweet Bashrc
-#
-###############################################################################
+#  awdeorio's Bash customizations
 
 
 ### places ####################################################################
@@ -14,46 +10,79 @@ export NFSHOME=/net/trenton/w/awdeorio
 export IFSHOME=/afs/umich.edu/user/a/w/awdeorio
 export WWWHOME=/net/web/w/web/u/a/awdeorio
 export WWWINFERNO=/net/web/w/web/inferno
-export BACKUP=${NFSHOME}/backup/nacho/awdeorio
+export BACKUP=${NFSHOME}/backup/manzana/awdeorio
 export EECS280=/afs/umich.edu/class/eecs280
 
 # set umask for both scp and ssh
 umask 002
 
+# Language
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
 
 ### Aliases ###################################################################
+# NOTE: emacs, git, ls, and less  aliases appear later
 alias du="du -sh"
 alias dusort="command du -s * .* | sort -n"
 alias df="df -h"
 alias cdd="cd .."
 alias grep="grep --color"
+alias egrep="egrep --color"
+alias fgrep="fgrep --color"
+alias zgrep="zgrep --color"
 alias igrep="grep -i"
 alias wcl="wc -l"
-alias rmb='echo "rm -vf *~" && rm -vf *~'
+alias rmb='echo "rm -vf *~ .*~" && rm -vf *~ .*~'
 alias rmt='[ -d ${HOME}/.Trash/ ] && echo "rm -rvf ${HOME}/.Trash/*" && rm -rvf ${HOME}/.Trash/*'
 alias rmd='[ -d ${HOME}/Downloads/ ] && echo "rm -rvf ${HOME}/Downloads/*" && rm -rvf ${HOME}/Downloads/*'
+alias rme='[ -d ${HOME}/Desktop/ ] && echo "rm -rvf ${HOME}/Desktop/*" && rm -rvf ${HOME}/Desktop/*'
 alias latex='latex -halt-on-error'
-alias lftps='lftp -e "open -u awdeorio,xx sftp://snoopy.eecs.umich.edu"'
 alias dftp='ssh -R 19999:localhost:22'
 function dftp-get { command scp -r -P19999 "$@" localhost: ; }
-alias shred='shred --remove'
 alias R='R --quiet --no-save'
-#NOTE: see later for ls options
-alias xat='xattr -r -d com.apple.quarantine /Users/awdeorio/mnt/Encrypted_Drew'
+alias grip='grip --norefresh --browser'
+alias whatismyip='curl ipinfo.io/ip'
+alias weather='curl http://wttr.in/ann_arbor?Tn1'
+alias weather3='curl http://wttr.in/ann_arbor?Tn | less'
+alias vboxmanage=VBoxManage
+alias et='e ${HOME}/Dropbox/scratch.txt ${HOME}/Dropbox/lists/todo/*/todo.txt'
+alias gg='grep -r . --binary-files=without-match --exclude-dir ".git" --exclude "*~" -e'
+function ff() { find . -type f -iwholename '*'$*'*' ; }
+alias fb="find . -name '*~'"
+alias fbrm="find . -name '*~' -exec rm -v {} \;"
+alias pytest="pytest -vv --tb=line"
+
+# OSX
+if [ -d /Applications/Meld.app ]; then
+  alias meld='open -a Meld --args'
+fi
+if which mdfind &> /dev/null; then
+  alias locate='mdfind -name'
+fi
+if test -d /Applications/Google\ Chrome.app; then
+  alias chrome='open -a "Google Chrome" --args'
+  alias google-chrome='/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome'
+fi
 
 
 ### Editor ####################################################################
-alias e="emacs"
-export EDITOR='emacs'                # my favorite editor
+export EDITOR=emacs
+alias e=$EDITOR
+
 function emacs {
-  # Make emacs start in the background, change window title
+  # Make emacs start in the background on GUIs
   if [ "$1" == "-nw" ]; then
+    # -nw option takes precedence
     command emacs "$@"
-    return
-  elif [ `uname` = "Darwin" ]; then
+  elif [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    # Don't try to use GUI on SSH connections
+    command emacs -nw "$@"
+  elif [ -e /Applications/Emacs.app/Contents/MacOS/Emacs ]; then
+    # OSX GUI
     /Applications/Emacs.app/Contents/MacOS/Emacs "$@" &
   elif [ "$DISPLAY" ] || [ "$OS" = "Windows_NT" ]; then
-    bgui emacs "$@" &
+    # Linux and Cygwin GUI
+    command nohup emacs "$@" &
   else
     # for console
     command emacs "$@"
@@ -62,10 +91,18 @@ function emacs {
 
 
 ### Pager #####################################################################
-alias more=less
-alias less="less --shift 5 --ignore-case --chop-long-lines --RAW-CONTROL-CHARS --LONG-PROMPT"
-export PAGER=less
-export LESSOPEN="|${HOME}/bin/lesspipe.sh %s"
+export PAGER="less --shift 5 --ignore-case --chop-long-lines --RAW-CONTROL-CHARS --LONG-PROMPT"
+alias less="${PAGER}"
+export LESSOPEN="| lesspipe.sh %s"
+
+
+### GPG, SSH and paswords  ###################################################
+# Start gpg-agent and connect SSH agent only if secret keys are available
+if gpg --list-secret-keys awdeorio &> /dev/null; then
+  export GPG_TTY=$(tty)
+  gpgconf --launch gpg-agent
+  export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+fi
 
 
 ### Path stuff ################################################################
@@ -120,9 +157,11 @@ fi
 [ -d ${CPATH} ]              && export CPLUS_INCLUDE_PATH=${CPLUS_INCLUDE_PATH}:${CPATH}
 [ -d ${HOME}/local/man ]     && export MANPATH=${HOME}/local/man:${MANPATH}
 
-# OS X GNU Coreutils
+# OSX GNU Coreutils
 path-prepend /usr/local/opt/coreutils/libexec/gnubin
-[ -d /usr/local/opt/coreutils/libexec/gnuman ] && export MATHPATH=/usr/local/opt/coreutils/libexec/gnuman:$MANPATH
+if [ -d /usr/local/opt/coreutils/libexec/gnuman ]; then
+  export MANPATH=/usr/local/opt/coreutils/libexec/gnuman:$MANPATH
+fi
 
 # local perl module installs
 if [ -d ${HOME}/local/lib/perl5 ]; then
@@ -143,19 +182,11 @@ if [ -d ${HOME}/local/lib/python2.6 ]; then
   export PYTHONUSERBASE=${HOME}/local
 fi
 export PYTHONSTARTUP=~/.pythonrc.py
-
-# local Ruby
-# Load RVM into a shell session *as a function*
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
-export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
+path-prepend /usr/local/opt/sqlite/bin
+eval "$(pyenv init -)"  # required by pyenv to modify PATH
 
 # CCache
 path-prepend /usr/lib/ccache/bin || path-prepend /usr/lib/ccache
-
-
-###############################################################################
-### source local file, if it's there
-[ -f ~/.bashrc-local ] && source ~/.bashrc-local
 
 
 ################################################################################
@@ -163,92 +194,6 @@ path-prepend /usr/lib/ccache/bin || path-prepend /usr/lib/ccache
 # point for scp and rcp, and it's important to refrain from outputting 
 # anything in those cases.
 [[ $- != *i* ]] && return
-
-
-
-### Make Certain Applications Start in the Background #########################
-function bgui {
-# test for GUI and application, start it in the background
-# Usage: textx_gui(application_name)
-
-  EXE="$1"
-  EXE_FULLPATH=`/usr/bin/which $EXE 2> /dev/null`
-    #echo "exe = $EXE, exe_fullpath = $EXE_FULLPATH"
-
-  if [ ! "$DISPLAY" ] && [ ! "$OS" = "Windows_NT" ]; then
-    echo "bgui Error: No display found."
-    return 1
-  fi
-  if [ ! "$EXE_FULLPATH" ]; then
-    echo "bgui Error: Can't find path to executable $EXE."
-    return 1
-  fi
-  if ! test -x "$EXE_FULLPATH"; then
-    echo "bgui Error: $EXE_FULLPATH is not executable"
-    return 1
-  fi
-
-    # note: $@ already contains the command itself
-  command nohup "$@" &> /dev/null &
-}
-
-# alias skype='bgui skype'
-# alias thunderbird='bgui thunderbird'
-# alias evince='bgui evince'
-# alias acroread='bgui acroread'
-# alias meld='bgui meld'
-# alias firefox='bgui firefox'
-# alias google-chrome='bgui google-chrome'
-# alias soffice='bgui soffice'
-# alias rhythmbox='bgui rhythmbox'
-# alias eog='bgui eog'
-# alias virtualbox='bgui virtualbox'
-# alias eclipse='bgui eclipse'
-# alias pithos='bgui pithos'
-# alias radiotray='bgui radiotray'
-
-
-### Utility Functions #########################################################
-
-# recursively grep for string
-alias gg='grep -r . --binary-files=without-match --exclude-dir ".svn" --exclude "*~" -e'
-
-# Find a file with a pattern in name:
-function ff() { 
-    find . -type f -iwholename '*'$*'*' ;
-}
-
-# Find a file with pattern $1 in name and Execute $2 on it:
-function fe() {
-  find . -type f -iname '*'$1'*' -exec "${2:-file}" {} \;  ;
-}
-
-# Alias for locate on OSX
-if [ `uname` = "Darwin" ]; then
-  alias locate='mdfind -name'
-fi
-
-
-# check if a process is running
-function psg() {
-  ps ax | grep "$1" | grep -v grep
-}
-
-# auto ping
-function ping {
-  if [ ! "$1" ]; then
-    command ping google.com -c3
-  else
-    command ping "$@"
-  fi
-}
-
-# source bashrc
-function sb {
-  BASHRC_FILE=$HOME/.bashrc
-  echo "source $BASHRC_FILE"
-  source $BASHRC_FILE
-}
 
 
 ### Printing ##################################################################
@@ -263,77 +208,127 @@ set -o history                       # enable up-arrow command history
 export HISTIGNORE="&:ls:cd:bg:fg:ll" # ignore these commands in history
 export HISTCONTROL="ignoredups"      # ignore duplicates in history
 export FIGNORE="~"                   # don't show these prefixes in tab-comp
-shopt -s cdspell                     # Allow shitty spelling in cd commands
 shopt -s checkwinsize                # keep LINES and COLUMNS up to date
-shopt -s cdable_vars                 # shell vars added cd expansion
+
+function find_git_context() {
+  # Based on https://github.com/jimeh/git-aware-prompt
+
+  # Branch
+  local BRANCH
+  local GIT_BRANCH
+  if BRANCH=$(git rev-parse --abbrev-ref HEAD 2> /dev/null); then
+    if [[ "$branch" == "HEAD" ]]; then
+      BRANCH='detached*'
+    fi
+    GIT_BRANCH="$BRANCH"
+  else
+    GIT_BRANCH=""
+  fi
+
+  # '*' for dirty
+  local STATUS=$(git status --porcelain 2> /dev/null)
+  local GIT_DIRTY
+  if [[ "$STATUS" != "" ]]; then
+    GIT_DIRTY='*'
+  else
+    GIT_DIRTY=''
+  fi
+
+  # Concatenate
+  GIT_CONTEXT="${GIT_BRANCH}${GIT_DIRTY}"
+}
+
+function ps1_context {  
+	# For any of these bits of context that exist, display them and append
+	# a space.  Ref: https://gist.github.com/datagrok/2199506
+	VIRTUAL_ENV_BASE=`basename "$VIRTUAL_ENV"`
+  find_git_context
+	for v in "${GIT_CONTEXT}" \
+             "${debian_chroot}" \
+             "${VIRTUAL_ENV_BASE}" \
+             "${GIT_DIRTY}" \
+             "${PS1_CONTEXT}"; do
+		echo -n "${v:+$v }"
+	done
+}
 
 # Fancy Prompt
-if [ "$LOGNAME" == "root" ]; then      # r00t
-  export PS1='\[\033[01;31m\]\u@\h \[\033[01;34m\]\W $ \[\033[00m\]'
-elif [ "$SSH_CONNECTION" ]; then     # remote machines
-  export PS1='\[\033[00;36m\]\u@\h \[\033[01;34m\]\W \$ \[\033[00m\]'
-else                                 # local machine
-  export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \W \$\[\033[00m\] '
-fi
+source ~/.bashrc_colors
+case "$TERM" in
+  xterm*|rxvt*|Eterm*|eterm*|screen*)
+    # If the terminal supports colors, then use fancy terminal
+    if [ "$LOGNAME" == "root" ]; then
+      # root
+      PS1='\[${bldred}\]\]\u@\h \[${bldblue}\]\W\n\$ \[${txtrst}\]'
+    elif [ "$SSH_CONNECTION" ]; then
+      # remote machines
+      PS1='\[${txtblk}\]$(ps1_context)\[${bldcyn}\]\u@\h \[${bldblu}\]\W\n\$ \[${txtrst}\]'
+    else
+      # local machine
+      PS1='\[${txtpur}\]$(ps1_context)\[${bldgrn}\]\u@\h \[${bldblu}\]\W\n\$ \[${txtrst}\]'
+    fi
+    ;;
+  *)
+    # Default no color, no fanciness
+    PS1='$ '
+    ;;
+esac
+export PS1
 
 # Change the window title of X terminals
-case $TERM in
-  xterm*|rxvt|Eterm|eterm)
+case "$TERM" in
+  xterm*|rxvt*|Eterm*|eterm*)
     PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\007"'
     ;;
-  screen)
+  screen*)
     PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\033\\"'
     ;;
 esac
+export PROMPT_COMMAND
 
 # Colorized output
-if [[ `uname` = "Linux" ]]; then
+LS=ls
+if which gls &> /dev/null; then
+  # GNU ls on OSX
+  LS=gls
+fi
+if `ls --version | grep -q GNU &> /dev/null`; then
   # GNU ls
   eval `dircolors -b ${HOME}/.DIR_COLORS`
-  alias ls="ls --color --human-readable --ignore-backups"
-  alias ll="ls --color --human-readable --ignore-backups -l"
-  alias la="ls --color --human-readable -A"
-elif [[ `uname` = "Darwin" ]] && [[ `which gls` ]]; then
-  # GNU ls
-  eval `dircolors -b ${HOME}/.DIR_COLORS`
-  alias ls="gls --color --human-readable --quoting-style=literal --ignore-backups --ignore $'Icon\r'"
-  alias ll="gls --color --human-readable --quoting-style=literal --ignore-backups --ignore $'Icon\r' -l"
-  alias la="gls --color --human-readable --quoting-style=literal -A"
+  LSOPT="--color=auto --human-readable --quoting-style=literal --ignore-backups --ignore $'Icon\r'"
 else
-  alias ls="ls -G -h"
-  alias ll="ls -G -h -l"
-  alias la="ls -G -h -A"
-  export CLICOLOR=1
+  # BSD ls
+  # -G is for color
+  LSOPT="-G"
+fi
+alias ls="${LS} -h ${LSOPT}"
+alias ll="${LS} -h -l ${LSOPT}"
+alias la="${LS} -h -A ${LSOPT}"
+
+
+### Homebrew package manager customization ###################################
+if which brew &> /dev/null; then
+  export HOMEBREW_NO_AUTO_UPDATE=1
 fi
 
 
 ### Bash-completion ###########################################################
-
 if which brew &>/dev/null && [[ -f $(brew --prefix)/etc/bash_completion ]]; then
   # OS X
   . $(brew --prefix)/etc/bash_completion
 elif [[ $PS1 && -f /usr/share/bash-completion/bash_completion ]]; then
   . /usr/share/bash-completion/bash_completion
 fi
+for F in `find ${HOME}/.bash_completion.d/ -type f`; do
+  source $F
+done
 
 
-### Todotxt setup #############################################################
-export TODO_DIR=${HOME}/Dropbox/lists/todo/work
-alias t='todo.sh'
-alias et='e ${HOME}/Dropbox/lists/todo/*/todo.txt'
-
-# todo toggle
-# switches default todo list
-function tt {
-  TODO_DIRS=(`ls -d Dropbox/lists/todo/*/`)
-  NEW_DIR_IDX=0
-  if [ "$TODO_DIR" == "${TODO_DIRS[$NEW_DIR_IDX]}" ]; then
-    NEW_DIR_IDX=1;
-  fi
-  echo "TODO_DIR=${TODO_DIRS[$NEW_DIR_IDX]}"
-  export TODO_DIR="${TODO_DIRS[$NEW_DIR_IDX]}";
-}
-
+### Git customization #########################################################
+# Alias "g" to "git" and don't break bash completion
+alias g=git
+complete -o bashdefault -o default -o nospace -F _git g 2>/dev/null \
+  || complete -o default -o nospace -F _git g
 
 # Clear History at the very end
 history -c

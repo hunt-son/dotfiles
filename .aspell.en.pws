@@ -1,4 +1,4 @@
-personal_ws-1.1 en 205 
+personal_ws-1.1 en 215 
 structs
 microbenchmarks
 DDR
@@ -26,6 +26,7 @@ GPUs
 PowerPC
 netlists
 RTL
+ANOVA
 CSE
 levelizing
 nerdy
@@ -39,10 +40,13 @@ VCS
 CoSMa's
 Opteron
 checker's
+soffit
 website
+programmatically
 awdeorio
 multimeter
 multimeters
+Giugliano
 runtimes
 Cuernavaca
 GCS
@@ -53,6 +57,7 @@ ESC
 pedagogies
 Chico's
 synthesizable
+executables
 GCS's
 mispredicted
 Ammons
@@ -64,6 +69,7 @@ Bauserman
 MESI
 testcases
 GHz
+responder
 nanometer
 mentee
 roadmap
@@ -75,6 +81,7 @@ TSMC
 writeback
 IDs
 CHouse
+customizations
 Vicis
 misordering
 HKN
@@ -95,8 +102,8 @@ Bertacco's
 resynthesis
 IPC
 NVIDIA's
-datapath
 quartiles
+datapath
 OpenCores
 practica
 ISA
@@ -126,6 +133,7 @@ Drew's
 Bennington
 debuggability
 SimpleScalar
+deburring
 CUDA's
 Verilog
 Farmington
@@ -139,8 +147,8 @@ Wenisch
 perceptron
 nd
 FunSAT
-LPs
 functors
+LPs
 Reglaze
 Dacota's
 DMA's
@@ -149,8 +157,8 @@ among
 traveller's
 pm
 UTMI
-NMI
 PCI
+NMI
 LVP
 ABC
 NoC
@@ -178,6 +186,7 @@ FSM's
 CUDA
 Virtutech
 Debapriya
+sanitizer
 Dacota
 Simics
 stuffsack
@@ -199,7 +208,9 @@ ITRS
 Asheville
 conguration
 tapeout
+anonymized
 bzip
 level's
+diverter
 DFD
 lockstep
